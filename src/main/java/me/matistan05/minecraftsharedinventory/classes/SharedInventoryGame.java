@@ -11,8 +11,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.Damageable;
-import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 
@@ -31,10 +29,6 @@ public class SharedInventoryGame {
     // initiated)
     private String playerNameWithDifferentInventory = null;
 
-    public Map<UUID, Block> getBreakingBlocks() {
-        return breakingBlocks;
-    }
-
     // Map of players breaking blocks
     private final Map<UUID, Block> breakingBlocks = new HashMap<>();
     // If a command was initiated by a player or a console, this is set to true
@@ -43,6 +37,18 @@ public class SharedInventoryGame {
 
     public SharedInventoryGame(Main main) {
         this.main = main;
+    }
+
+    public boolean isPlayerBreakingBlock(Player player) {
+        return breakingBlocks.containsKey(player.getUniqueId());
+    }
+
+    public void setPlayerBreakingBlock(Player player) {
+        breakingBlocks.put(player.getUniqueId(), player.getLocation().getBlock());
+    }
+
+    public void removePlayerBreakingBlock(Player player) {
+        breakingBlocks.remove(player.getUniqueId());
     }
 
     public void addPlayers(CommandSender p, String[] args) {
@@ -180,7 +186,7 @@ public class SharedInventoryGame {
                     if (player == null)
                         continue;
 
-                    if (!inventoryEqual(sharedInventory, player.getInventory())) {
+                    if (!inventoryEqual(sharedInventory, player.getInventory()) && !isPlayerBreakingBlock(player)) {
                         changedInventories += 1;
 
                         if (playerWithDifferentInventory == null)
@@ -210,6 +216,9 @@ public class SharedInventoryGame {
                     for (SharedInventoryPlayer playerObject : players) {
                         Player player = Bukkit.getPlayerExact(playerObject.getName());
                         if (player == null || playerWithNewInventory.getName().equals(player.getName()))
+                            continue;
+                        // Skip synchronization for players who are breaking blocks
+                        if (isPlayerBreakingBlock(player))
                             continue;
                         player.getInventory().setContents(playerWithNewInventory.getInventory().getContents());
                     }

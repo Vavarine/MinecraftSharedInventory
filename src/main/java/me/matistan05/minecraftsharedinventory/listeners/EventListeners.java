@@ -18,6 +18,9 @@ import org.bukkit.event.server.ServerCommandEvent;
 import org.bukkit.event.vehicle.VehicleCreateEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockDamageAbortEvent;
+import org.bukkit.event.block.BlockDamageEvent;
 
 import static me.matistan05.minecraftsharedinventory.commands.SharedInventoryCommand.*;
 
@@ -62,18 +65,23 @@ public class EventListeners implements Listener {
     // InventoryClickEvent
     @EventHandler
     public void onDropItem(PlayerDropItemEvent e) {
+        Player player = e.getPlayer();
         // Bukkit.broadcastMessage("PlayerDropItemEvent");
-        SharedInventoryGame game = getGameFromPlayer(e.getPlayer().getName());
+        SharedInventoryGame game = getGameFromPlayer(player.getName());
         if (game == null)
             return;
         if (!game.inProgress())
             return;
+        if (game.isPlayerBreakingBlock(player)) {
+            e.setCancelled(true);
+            return;
+        }
         if (game.getPlayerNameWithDifferentInventory() != null) {
-            if (!game.getPlayerNameWithDifferentInventory().equals(e.getPlayer().getName())) {
+            if (!game.getPlayerNameWithDifferentInventory().equals(player.getName())) {
                 e.setCancelled(true);
             }
         } else
-            game.setPlayerNameWithDifferentInventory(e.getPlayer().getName());
+            game.setPlayerNameWithDifferentInventory(player.getName());
     }
 
     @EventHandler
@@ -87,6 +95,10 @@ public class EventListeners implements Listener {
             return;
         if (!game.inProgress())
             return;
+        if (game.isPlayerBreakingBlock(player)) {
+            e.setCancelled(true);
+            return;
+        }
         if (game.getPlayerNameWithDifferentInventory() != null) {
             if (!game.getPlayerNameWithDifferentInventory().equals(player.getName())) {
                 e.setCancelled(true);
@@ -518,6 +530,77 @@ public class EventListeners implements Listener {
             }
         } else
             game.setPlayerNameWithDifferentInventory(player.getName());
+    }
+
+    @EventHandler
+    public void onBlockDamage(BlockDamageEvent e) {
+        if (e.getInstaBreak()) {
+            return;
+        }
+
+        ItemStack itemInHand = e.getPlayer().getInventory().getItemInMainHand();
+
+        if (itemInHand == null) {
+            return;
+        }
+
+        if (itemInHand.getType().getMaxDurability() == 0) {
+            return;
+        }
+
+        SharedInventoryGame game = getGameFromPlayer(e.getPlayer().getName());
+
+        if (game == null)
+            return;
+        if (!game.inProgress())
+            return;
+
+        game.setPlayerBreakingBlock(e.getPlayer());
+    }
+
+    @EventHandler
+    public void onBlockDamageAbort(BlockDamageAbortEvent e) {
+        if (!(e.getPlayer() instanceof Player))
+            return;
+
+        Player player = (Player) e.getPlayer();
+
+        SharedInventoryGame game = getGameFromPlayer(player.getName());
+        if (game == null)
+            return;
+        if (!game.inProgress())
+            return;
+        if (!game.isPlayerBreakingBlock(player)) {
+            return;
+        }
+
+        e.getPlayer().getInventory().setContents(game.getSharedInventoryContents());
+        game.removePlayerBreakingBlock(player);
+    }
+
+    @EventHandler
+    public void onBlockBreak(BlockBreakEvent e) {
+        SharedInventoryGame game = getGameFromPlayer(e.getPlayer().getName());
+        if (game == null)
+            return;
+        if (!game.inProgress())
+            return;
+        if (!game.isPlayerBreakingBlock(e.getPlayer())) {
+            return;
+        }
+
+        e.getPlayer().getInventory().setContents(game.getSharedInventoryContents());
+        game.removePlayerBreakingBlock(e.getPlayer());
+    }
+
+    @EventHandler
+    public void onPlayerQuit(PlayerQuitEvent e) {
+        SharedInventoryGame game = getGameFromPlayer(e.getPlayer().getName());
+        if (game == null)
+            return;
+        if (!game.inProgress())
+            return;
+        game.removePlayerBreakingBlock(e.getPlayer());
     }
 
     public static boolean commandEqual(String commandToCheck, String command) {
