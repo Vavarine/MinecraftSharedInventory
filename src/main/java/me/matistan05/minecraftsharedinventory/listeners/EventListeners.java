@@ -76,6 +76,7 @@ public class EventListeners implements Listener {
             e.setCancelled(true);
             return;
         }
+        game.clearPlayersBreakingBlocks();
         if (game.getPlayerNameWithDifferentInventory() != null) {
             if (!game.getPlayerNameWithDifferentInventory().equals(player.getName())) {
                 e.setCancelled(true);
@@ -147,6 +148,7 @@ public class EventListeners implements Listener {
             return;
         if (!game.inProgress())
             return;
+        game.clearPlayersBreakingBlocks();
         if (game.getPlayerNameWithDifferentInventory() != null) {
             if (!game.getPlayerNameWithDifferentInventory().equals(e.getPlayer().getName())) {
                 e.setCancelled(true);
@@ -166,6 +168,7 @@ public class EventListeners implements Listener {
             return;
         if (!game.inProgress())
             return;
+        game.clearPlayersBreakingBlocks();
         if (game.getPlayerNameWithDifferentInventory() != null) {
             if (!game.getPlayerNameWithDifferentInventory().equals(player.getName())) {
                 e.setCancelled(true);
@@ -201,6 +204,7 @@ public class EventListeners implements Listener {
             return;
         if (!game.inProgress())
             return;
+        game.clearPlayersBreakingBlocks();
         game.setPlayerNameWithDifferentInventory(e.getEntity().getName());
     }
 
@@ -234,6 +238,7 @@ public class EventListeners implements Listener {
             return;
         if (!game.inProgress())
             return;
+        game.clearPlayersBreakingBlocks();
         if (game.getPlayerNameWithDifferentInventory() != null) {
             if (!game.getPlayerNameWithDifferentInventory().equals(e.getPlayer().getName())) {
                 e.setCancelled(true);

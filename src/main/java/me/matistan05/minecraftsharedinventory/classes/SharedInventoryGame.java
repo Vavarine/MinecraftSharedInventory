@@ -51,6 +51,10 @@ public class SharedInventoryGame {
         breakingBlocks.remove(player.getUniqueId());
     }
 
+    public void clearPlayersBreakingBlocks() {
+        breakingBlocks.clear();
+    }
+
     public void addPlayers(CommandSender p, String[] args) {
         List<String> playersToAdd;
         if (args[2].equals("@a")) {
